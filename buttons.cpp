@@ -1,7 +1,8 @@
 #ifndef INTR_EXCLUSIIVE
-#include <functional>
+//#include <functional>
 #include <FunctionalInterrupt.h>
 #endif
+//#include <FunctionalInterrupt.h>
 #include "buttons.h"
 
 uint8_t Buttons::add(uint8_t pin, bool level) {
@@ -17,14 +18,9 @@ uint8_t Buttons::add(uint8_t pin, bool level) {
   result = List<button_t, 10>::add(b);
   if (result != ERR_INDEX) {
     pinMode(pin, level ? INPUT : INPUT_PULLUP);
-#ifdef INTR_EXCLUSIIVE
-    ETS_GPIO_INTR_DISABLE();
-    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(pin));
-    gpio_pin_intr_state_set(GPIO_ID_PIN(pin), GPIO_PIN_INTR_ANYEDGE);
-    ETS_GPIO_INTR_ENABLE();
-#else
+
     attachInterrupt(pin, [this]() { this->_isr(this); }, CHANGE);
-#endif
+
   }
 
   return result;
@@ -33,34 +29,23 @@ uint8_t Buttons::add(uint8_t pin, bool level) {
 void Buttons::pause(uint8_t index) {
   if (_items && (index < _count)) {
     _items[index].paused = true;
-#ifdef INTR_EXCLUSIIVE
-    ETS_GPIO_INTR_DISABLE();
-    gpio_pin_intr_state_set(GPIO_ID_PIN(_items[index].pin), GPIO_PIN_INTR_DISABLE);
-    ETS_GPIO_INTR_ENABLE();
-#else
+
     detachInterrupt(_items[index].pin);
-#endif
+
   }
 }
 
 void Buttons::resume(uint8_t index) {
   if (_items && (index < _count)) {
     _items[index].paused = false;
-#ifdef INTR_EXCLUSIIVE
-    ETS_GPIO_INTR_DISABLE();
-    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(_items[index].pin));
-    gpio_pin_intr_state_set(GPIO_ID_PIN(_items[index].pin), GPIO_PIN_INTR_ANYEDGE);
-    ETS_GPIO_INTR_ENABLE();
-#else
+
     attachInterrupt(_items[index].pin, [this]() { this->_isr(this); }, CHANGE);
-#endif
+
   }
 }
 
 void ICACHE_RAM_ATTR Buttons::_isr(Buttons *_this) {
-#ifdef INTR_EXCLUSIIVE
-  uint32_t status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
-#endif
+
 
   if (_this->_items && _this->_count) {
     uint32_t time = millis() - _this->_isrtime;
@@ -98,20 +83,14 @@ void ICACHE_RAM_ATTR Buttons::_isr(Buttons *_this) {
       }
     }
   }
-#ifdef INTR_EXCLUSIIVE
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, status);
-#endif
+
   _this->_isrtime = millis();
 }
 
 void Buttons::cleanup(void *ptr) {
-#ifdef INTR_EXCLUSIIVE
-  ETS_GPIO_INTR_DISABLE();
-  gpio_pin_intr_state_set(GPIO_ID_PIN(((button_t*)ptr)->pin), GPIO_PIN_INTR_DISABLE);
-  ETS_GPIO_INTR_ENABLE();
-#else
+
   detachInterrupt(((button_t*)ptr)->pin);
-#endif
+
 }
 
 bool Buttons::match(uint8_t index, const void *t) {
