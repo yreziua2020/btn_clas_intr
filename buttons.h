@@ -1,13 +1,8 @@
 #ifndef __BUTTONS_H
 #define __BUTTONS_H
 
-//#define INTR_EXCLUSIIVE
 
-#ifdef INTR_EXCLUSIIVE
-extern "C" {
-#include <user_interface.h>
-}
-#endif
+
 #include <Arduino.h>
 #include "list.h"
 #include "queue.h"
@@ -29,9 +24,7 @@ public:
   };
 
   Buttons() : List<button_t, 10>(), _isrtime(0) {
-#ifdef INTR_EXCLUSIIVE
-    ETS_GPIO_INTR_ATTACH(_isr, this);
-#endif
+
   }
 
   uint8_t add(uint8_t pin, bool level);
