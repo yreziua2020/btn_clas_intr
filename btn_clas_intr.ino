@@ -9,7 +9,7 @@ void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  btns.add(D1, LOW);
+  btns.add(D6, LOW);
  // btns.add(D2, LOW);
  // btns.add(D3, LOW);
  // btns.add(D5, LOW);
